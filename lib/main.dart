@@ -1,63 +1,194 @@
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
-import 'package:flutter/services.dart'; // For setting device orientation and hiding UI
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: VideoGridScreen(),
+      home: BrowseScreen(),
     );
   }
 }
 
-class VideoGridScreen extends StatefulWidget {
+class BrowseScreen extends StatelessWidget {
   @override
-  _VideoGridScreenState createState() => _VideoGridScreenState();
-}
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'VR Cinema',
+          style: TextStyle(color: Colors.orange),
+        ),
+        backgroundColor: Colors.black87,
+        actions: [
+          IconButton(
+            icon: Icon(
+              Icons.apps,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              _showAppsDialog(context);
+            },
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.more_vert,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              _showMoreOptions(context);
+            },
+          ),
+        ],
+      ),
+      body: ListView(
+        padding: EdgeInsets.all(16.0),
+        children: <Widget>[
+          // Favorites Section
+          _sectionTitle('Favorites', Colors.orange),
+          _buildFavoriteItem(context, Icons.folder, 'Download', '0', '0', 'Download Folder'),
+          _buildFavoriteItem(context, Icons.folder, 'Movies', '0', '0', 'Movies Folder'),
+          _buildFavoriteItem(context, Icons.music_note, 'Music', '0', '0', 'Music Folder'),
+          _buildFavoriteItem(context, Icons.folder, 'WhatsApp Video', '0', '0', 'WhatsApp Video Folder'),
+          _buildFavoriteItem(context, Icons.folder, 'History', '0', '0', 'History Folder'),
 
-class _VideoGridScreenState extends State<VideoGridScreen> {
-  List<String> videoPaths = [
-    'assets/videos/yoriichi.mp4',
-    'assets/videos/zenitsu.mp4',
-    'assets/videos/tanjiro.mp4',
-  ];
+          SizedBox(height: 20),
 
-  List<String> filteredVideos = [];
+          // Storages Section
+          _sectionTitle('Storages', Colors.orange),
+          _buildStorageItem(context, Icons.folder, 'Internal memory', 'Internal Storage'),
 
-  @override
-  void initState() {
-    super.initState();
-    filteredVideos = videoPaths; // Initially show all videos
+          SizedBox(height: 20),
+
+          // Local Network Section
+          _sectionTitle('Local Network', Colors.orange),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10.0),
+            child: Text(
+              'Looking for network shares..',
+              style: TextStyle(color: Colors.grey, fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+
+      // Bottom Navigation Bar
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.black87,
+        selectedItemColor: Colors.orange,
+        unselectedItemColor: Colors.grey,
+        currentIndex: 2, // Set Browse as the current screen
+        onTap: (index) => _onBottomNavigationTapped(index, context),
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.videocam),
+            label: 'Video',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.audiotrack),
+            label: 'Audio',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.folder),
+            label: 'Browse',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.playlist_play),
+            label: 'Playlists',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.more_horiz),
+            label: 'More',
+          ),
+        ],
+      ),
+    );
   }
 
-  void _showSearchDialog(BuildContext context) {
+  // Widget for Section Title
+  Widget _sectionTitle(String title, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 18,
+          color: color,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  // Widget for each Favorite Item
+  Widget _buildFavoriteItem(BuildContext context, IconData icon, String title, String folderCount, String fileCount, String folderName) {
+    return ListTile(
+      leading: Icon(icon, size: 40, color: Colors.grey),
+      title: Text(title, style: TextStyle(fontSize: 18)),
+      subtitle: Text('$folderCount folder · $fileCount file'),
+      trailing: Icon(Icons.more_vert),
+      onTap: () {
+        _openFolder(context, folderName);
+      },
+    );
+  }
+
+  // Widget for Storage Item
+  Widget _buildStorageItem(BuildContext context, IconData icon, String title, String storageName) {
+    return ListTile(
+      leading: Icon(icon, size: 40, color: Colors.grey),
+      title: Text(title, style: TextStyle(fontSize: 18)),
+      trailing: Icon(Icons.more_vert),
+      onTap: () {
+        _openFolder(context, storageName);
+      },
+    );
+  }
+
+  // Function to handle bottom navigation taps
+  void _onBottomNavigationTapped(int index, BuildContext context) {
+    String screenName;
+    switch (index) {
+      case 0:
+        screenName = 'Video Screen';
+        break;
+      case 1:
+        screenName = 'Audio Screen';
+        break;
+      case 2:
+        screenName = 'Browse Screen';
+        break;
+      case 3:
+        screenName = 'Playlists Screen';
+        break;
+      case 4:
+        screenName = 'More Screen';
+        break;
+      default:
+        screenName = 'Unknown';
+    }
+    _showScreen(context, screenName);
+  }
+
+  // Show a dialog for the Apps button
+  void _showAppsDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Search Videos'),
-          content: TextField(
-            decoration: const InputDecoration(
-              hintText: 'Enter video name',
-            ),
-            onChanged: (value) {
-              _filterVideos(value);
-            },
-          ),
+          title: Text("Apps"),
+          content: Text("This is where apps will be displayed."),
           actions: [
             TextButton(
+              child: Text("OK"),
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('Close'),
             ),
           ],
         );
@@ -65,241 +196,82 @@ class _VideoGridScreenState extends State<VideoGridScreen> {
     );
   }
 
-  // Filter the video list based on the search query
-  void _filterVideos(String query) {
-    setState(() {
-      if (query.isEmpty) {
-        filteredVideos = videoPaths;
-      } else {
-        filteredVideos = videoPaths
-            .where((video) => video.toLowerCase().contains(query.toLowerCase()))
-            .toList();
-      }
-    });
+  // Show a dialog for the More button
+  void _showMoreOptions(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("More Options"),
+          content: Text("This is where more options will be displayed."),
+          actions: [
+            TextButton(
+              child: Text("OK"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
+
+  // Open a folder and show a placeholder screen
+  void _openFolder(BuildContext context, String folderName) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FolderScreen(folderName: folderName),
+      ),
+    );
+  }
+
+  // Show a different screen from bottom navigation
+  void _showScreen(BuildContext context, String screenName) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => GenericScreen(screenName: screenName),
+      ),
+    );
+  }
+}
+
+// Placeholder for opening folders
+class FolderScreen extends StatelessWidget {
+  final String folderName;
+
+  FolderScreen({required this.folderName});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Videos'),
-        backgroundColor: Colors.orange,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              _showSearchDialog(context); // Call search dialog
-            },
-          ),
-        ],
+        title: Text(folderName),
       ),
-      body: GridView.builder(
-        padding: const EdgeInsets.all(10.0),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2, // Two videos per row
-          crossAxisSpacing: 10.0,
-          mainAxisSpacing: 10.0,
-        ),
-        itemCount: filteredVideos.length,
-        itemBuilder: (context, index) {
-          String videoName = filteredVideos[index].split('/').last;
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => VideoPlayerScreen(videoPath: filteredVideos[index]),
-                ),
-              );
-            },
-            child: GridTile(
-              footer: GridTileBar(
-                backgroundColor: Colors.black54,
-                title: Text(
-                  videoName,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              child: Container(
-                color: Colors.grey[500],
-                child: Icon(
-                  Icons.play_circle_outline,
-                  size: 50,
-                  color: Colors.orange,
-                ),
-              ),
-            ),
-          );
-        },
+      body: Center(
+        child: Text('Contents of $folderName will be shown here'),
       ),
     );
   }
 }
 
-class VideoPlayerScreen extends StatefulWidget {
-  final String videoPath;
+// Placeholder for navigating between different screens
+class GenericScreen extends StatelessWidget {
+  final String screenName;
 
-  const VideoPlayerScreen({super.key, required this.videoPath});
-
-  @override
-  _VideoPlayerScreenState createState() => _VideoPlayerScreenState();
-}
-
-class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
-  late VideoPlayerController _controller;
-  late Future<void> _initializeVideoPlayerFuture;
-  bool _controlsVisible = true; // Track whether the controls are visible or not
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Force landscape mode
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeRight,
-      DeviceOrientation.landscapeLeft,
-    ]);
-
-    // Hide system UI (status bar and navigation buttons) for fullscreen
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-
-    _controller = VideoPlayerController.asset(widget.videoPath);
-    _initializeVideoPlayerFuture = _controller.initialize();
-    _controller.setLooping(true);
-  }
-
-  @override
-  void dispose() {
-    // Reset the system UI and orientation settings when closing the video
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-    ]);
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge); // Show system UI again
-
-    _controller.dispose();
-    super.dispose();
-  }
+  GenericScreen({required this.screenName});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FutureBuilder(
-        future: _initializeVideoPlayerFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            return GestureDetector(
-              onTap: () {
-                // Toggle visibility of controls when tapping anywhere on the screen
-                setState(() {
-                  _controlsVisible = !_controlsVisible;
-                });
-              },
-              child: Stack(
-                children: [
-                  Center(
-                    child: AspectRatio(
-                      aspectRatio: _controller.value.aspectRatio,
-                      child: VideoPlayer(_controller),
-                    ),
-                  ),
-                  // Show controls only if _controlsVisible is true
-                  if (_controlsVisible) _buildVideoControls(),
-                ],
-              ),
-            );
-          } else {
-            return const Center(child: CircularProgressIndicator());
-          }
-        },
+      appBar: AppBar(
+        title: Text(screenName),
+      ),
+      body: Center(
+        child: Text('This is the $screenName'),
       ),
     );
-  }
-
-  Widget _buildVideoControls() {
-    return Positioned(
-      bottom: 30,
-      left: 0,
-      right: 0,
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.replay_10, color: Colors.white, size: 40),
-                onPressed: () {
-                  setState(() {
-                    _controller.seekTo(
-                      _controller.value.position - const Duration(seconds: 10),
-                    );
-                  });
-                },
-              ),
-              IconButton(
-                icon: Icon(
-                  _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
-                  color: Colors.white,
-                  size: 40,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _controller.value.isPlaying ? _controller.pause() : _controller.play();
-                  });
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.forward_10, color: Colors.white, size: 40),
-                onPressed: () {
-                  setState(() {
-                    _controller.seekTo(
-                      _controller.value.position + const Duration(seconds: 10),
-                    );
-                  });
-                },
-              ),
-            ],
-          ),
-          // Video Progress Bar with timestamps
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Current Position Text
-                Text(
-                  _formatDuration(_controller.value.position),
-                  style: const TextStyle(color: Colors.black),
-                ),
-                // Progress Bar
-                Expanded(
-                  child: VideoProgressIndicator(
-                    _controller,
-                    allowScrubbing: true,
-                    colors: VideoProgressColors(
-                      backgroundColor: Colors.grey,
-                      bufferedColor: Colors.white.withOpacity(0.5),
-                      playedColor: Colors.orange,
-                    ),
-                  ),
-                ),
-                // Total Duration Text
-                Text(
-                  _formatDuration(_controller.value.duration),
-                  style: const TextStyle(color: Colors.black),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Helper function to format the duration as mm:ss
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return '$minutes:$seconds';
   }
 }

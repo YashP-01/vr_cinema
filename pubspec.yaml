@@ -40,6 +40,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   video_player: ^2.9.1
+  permission_handler: ^10.2.0
   path_provider: ^2.1.4
 
   # The "flutter_lints" package below contains a set of recommended lints to
